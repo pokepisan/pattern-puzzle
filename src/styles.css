@@ -1,0 +1,194 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #0c0c14;
+  color: #c8c8e0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#root {
+  width: 100%;
+}
+
+.game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 40px 20px;
+}
+
+h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #e8e8f8;
+}
+
+.instructions {
+  text-align: center;
+  color: #787898;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  max-width: 460px;
+}
+
+/* ── Panel: lights + divider + switches ── */
+.panel {
+  background: #111120;
+  border: 1px solid #252538;
+  border-radius: 18px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.5);
+}
+
+.divider {
+  height: 1px;
+  background: #252538;
+  margin: 20px 0;
+}
+
+/* ── Lights ── */
+.lights-row {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.light {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: #180606;
+  border: 3px solid #2a1010;
+  position: relative;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+
+/* inner highlight */
+.light::after {
+  content: "";
+  position: absolute;
+  top: 20%;
+  left: 22%;
+  width: 28%;
+  height: 22%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  transition: background 0.12s;
+}
+
+.light.on {
+  background: radial-gradient(circle at 38% 35%, #ff5533, #cc1100 60%, #880800);
+  border-color: #ff2200;
+  box-shadow:
+    0 0 10px #ff220088,
+    0 0 24px #cc110066,
+    0 0 48px #880800aa;
+}
+
+.light.on::after {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+@keyframes wrongFlash {
+  0%   { background: #180606; border-color: #2a1010; box-shadow: none; }
+  25%  { background: #6a1000; border-color: #ff2000; box-shadow: 0 0 14px #ff2000; }
+  100% { background: #180606; border-color: #2a1010; box-shadow: none; }
+}
+
+.light.flash {
+  animation: wrongFlash 0.55s ease-out forwards;
+}
+
+/* ── Switches ── */
+.switches-row {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.switch-btn {
+  width: 62px;
+  height: 42px;
+  border-radius: 8px;
+  background: #1a1a2e;
+  border: 2px solid #2e2e50;
+  color: #8888b8;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, color 0.1s, transform 0.08s;
+  font-family: inherit;
+}
+
+.switch-btn:hover:not(:disabled) {
+  background: #252545;
+  border-color: #5555a0;
+  color: #c0c0f0;
+  transform: translateY(-2px);
+}
+
+.switch-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  background: #303060;
+  border-color: #7070c0;
+}
+
+.switch-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  transform: none;
+}
+
+/* ── Status line ── */
+.status {
+  height: 26px;
+  display: flex;
+  align-items: center;
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.status-won      { color: #44dd88; }
+.status-wrong    { color: #ff4444; }
+.status-idle     { color: #555570; }
+.status-progress { color: #6699ff; }
+
+/* ── New Game button ── */
+.new-game-btn {
+  padding: 9px 28px;
+  border-radius: 8px;
+  background: #16202e;
+  border: 2px solid #22344a;
+  color: #6699bb;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  font-family: inherit;
+}
+
+.new-game-btn:hover {
+  background: #1e2e40;
+  border-color: #3a6090;
+  color: #88bbdd;
+}
