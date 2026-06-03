@@ -156,20 +156,116 @@ h1 {
   transform: none;
 }
 
-/* ── Status line ── */
-.status {
-  height: 26px;
+/* ── Countdown ── */
+@keyframes countdownPop {
+  0%   { transform: scale(1.5); opacity: 0.3; }
+  100% { transform: scale(1);   opacity: 1;   }
+}
+
+.countdown-display {
+  font-size: 5rem;
+  font-weight: 900;
+  color: #ff3322;
+  line-height: 1;
+  min-height: 5.5rem;
   display: flex;
   align-items: center;
+  justify-content: center;
+  animation: countdownPop 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  text-shadow: 0 0 24px #ff220066;
+}
+
+.panel-dim {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ── Timer ── */
+.timer-row {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer {
+  font-size: 1.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-family: "Courier New", monospace;
+  color: #7799ee;
+  letter-spacing: 0.04em;
+}
+
+/* ── Status line ── */
+.status {
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.92rem;
   font-weight: 500;
   letter-spacing: 0.02em;
 }
 
-.status-won      { color: #44dd88; }
 .status-wrong    { color: #ff4444; }
 .status-idle     { color: #555570; }
 .status-progress { color: #6699ff; }
+
+/* ── End report ── */
+.report {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.report-title {
+  color: #44dd88;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.report-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #111120;
+  border: 1px solid #252538;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.report-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 24px;
+  gap: 3px;
+}
+
+.report-divider {
+  width: 1px;
+  height: 40px;
+  background: #252538;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #555570;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #e0e0ff;
+  font-variant-numeric: tabular-nums;
+}
 
 /* ── New Game button ── */
 .new-game-btn {

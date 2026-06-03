@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 function shuffle(arr: number[]): number[] {
   const a = [...arr];
@@ -9,43 +9,88 @@ function shuffle(arr: number[]): number[] {
   return a;
 }
 
-type GameState = "playing" | "won" | "wrong";
+type Phase = "countdown" | "playing" | "wrong" | "won";
+
+function formatTime(ms: number): string {
+  const s = Math.floor(ms / 1000);
+  const tenths = Math.floor((ms % 1000) / 100);
+  return `${s}.${tenths}s`;
+}
 
 export default function App() {
   const [sequence, setSequence] = useState<number[]>(() => shuffle([0, 1, 2, 3, 4, 5]));
   const [progress, setProgress] = useState(0);
-  const [gameState, setGameState] = useState<GameState>("playing");
+  const [phase, setPhase] = useState<Phase>("countdown");
+  const [countdown, setCountdown] = useState(3);
+  const [elapsed, setElapsed] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [finalTime, setFinalTime] = useState(0);
+  const startTimeRef = useRef<number | null>(null);
 
-  const pressSwitch = useCallback((idx: number) => {
-    if (gameState !== "playing") return;
-
-    if (sequence[progress] === idx) {
-      const next = progress + 1;
-      if (next === 6) {
-        setProgress(6);
-        setGameState("won");
-      } else {
-        setProgress(next);
-      }
-    } else {
-      setGameState("wrong");
-      setTimeout(() => {
-        setProgress(0);
-        setGameState("playing");
-      }, 800);
+  // Countdown ticker: 3 → 2 → 1 → playing
+  useEffect(() => {
+    if (phase !== "countdown") return;
+    if (countdown === 0) {
+      startTimeRef.current = Date.now();
+      setPhase("playing");
+      return;
     }
-  }, [sequence, progress, gameState]);
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [phase, countdown]);
+
+  // Live timer — runs during playing and wrong phases
+  useEffect(() => {
+    if (phase !== "playing" && phase !== "wrong") return;
+    const id = setInterval(() => {
+      if (startTimeRef.current !== null) {
+        setElapsed(Date.now() - startTimeRef.current);
+      }
+    }, 100);
+    return () => clearInterval(id);
+  }, [phase]);
+
+  const pressSwitch = useCallback(
+    (idx: number) => {
+      if (phase !== "playing") return;
+      if (sequence[progress] === idx) {
+        const next = progress + 1;
+        if (next === 6) {
+          const ft =
+            startTimeRef.current !== null ? Date.now() - startTimeRef.current : 0;
+          setFinalTime(ft);
+          setProgress(6);
+          setPhase("won");
+        } else {
+          setProgress(next);
+        }
+      } else {
+        setWrongCount((w) => w + 1);
+        setPhase("wrong");
+        setTimeout(() => {
+          setProgress(0);
+          setPhase("playing");
+        }, 800);
+      }
+    },
+    [sequence, progress, phase]
+  );
 
   const newGame = useCallback(() => {
     setSequence(shuffle([0, 1, 2, 3, 4, 5]));
     setProgress(0);
-    setGameState("playing");
+    setPhase("countdown");
+    setCountdown(3);
+    setElapsed(0);
+    setWrongCount(0);
+    setFinalTime(0);
+    startTimeRef.current = null;
   }, []);
 
   const litLights =
-    gameState === "won"
+    phase === "won"
       ? new Set([0, 1, 2, 3, 4, 5])
-      : gameState === "wrong"
+      : phase === "wrong"
       ? new Set<number>()
       : new Set(sequence.slice(0, progress));
 
@@ -57,7 +102,13 @@ export default function App() {
         Press the wrong switch and everything goes dark — start over!
       </p>
 
-      <div className="panel">
+      {phase === "countdown" && (
+        <div key={countdown} className="countdown-display">
+          {countdown}
+        </div>
+      )}
+
+      <div className={`panel${phase === "countdown" ? " panel-dim" : ""}`}>
         <div className="lights-row">
           {Array.from({ length: 6 }, (_, i) => (
             <div
@@ -65,22 +116,20 @@ export default function App() {
               className={[
                 "light",
                 litLights.has(i) ? "on" : "",
-                gameState === "wrong" ? "flash" : "",
+                phase === "wrong" ? "flash" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
             />
           ))}
         </div>
-
         <div className="divider" />
-
         <div className="switches-row">
           {Array.from({ length: 6 }, (_, i) => (
             <button
               key={i}
               className="switch-btn"
-              disabled={gameState !== "playing"}
+              disabled={phase !== "playing"}
               onClick={() => pressSwitch(i)}
             >
               {i + 1}
@@ -89,18 +138,40 @@ export default function App() {
         </div>
       </div>
 
+      <div className="timer-row">
+        {(phase === "playing" || phase === "wrong") && (
+          <span className="timer">{formatTime(elapsed)}</span>
+        )}
+      </div>
+
       <div className="status">
-        {gameState === "won" && (
-          <span className="status-won">You solved it! All lights on!</span>
+        {phase === "countdown" && (
+          <span className="status-idle">Get ready…</span>
         )}
-        {gameState === "wrong" && (
-          <span className="status-wrong">Wrong switch! Lights out...</span>
-        )}
-        {gameState === "playing" && progress === 0 && (
+        {phase === "playing" && progress === 0 && (
           <span className="status-idle">Press a switch to begin.</span>
         )}
-        {gameState === "playing" && progress > 0 && (
+        {phase === "playing" && progress > 0 && (
           <span className="status-progress">{progress} of 6 — keep going!</span>
+        )}
+        {phase === "wrong" && (
+          <span className="status-wrong">Wrong switch! Start over…</span>
+        )}
+        {phase === "won" && (
+          <div className="report">
+            <p className="report-title">Puzzle Solved!</p>
+            <div className="report-stats">
+              <div className="report-stat">
+                <span className="stat-label">Time</span>
+                <span className="stat-value">{formatTime(finalTime)}</span>
+              </div>
+              <div className="report-divider" />
+              <div className="report-stat">
+                <span className="stat-label">Wrong attempts</span>
+                <span className="stat-value">{wrongCount}</span>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
