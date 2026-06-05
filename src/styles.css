@@ -72,8 +72,8 @@ h1 {
   width: 62px;
   height: 62px;
   border-radius: 50%;
-  background: #180606;
-  border: 3px solid #2a1010;
+  background: var(--lc-dark);
+  border: 3px solid var(--lc-dim);
   position: relative;
   transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
 }
@@ -92,12 +92,17 @@ h1 {
 }
 
 .light.on {
-  background: radial-gradient(circle at 38% 35%, #ff5533, #cc1100 60%, #880800);
-  border-color: #ff2200;
+  background: radial-gradient(
+    circle at 38% 35%,
+    color-mix(in srgb, var(--lc) 70%, white),
+    var(--lc) 60%,
+    color-mix(in srgb, var(--lc) 40%, black)
+  );
+  border-color: var(--lc);
   box-shadow:
-    0 0 10px #ff220088,
-    0 0 24px #cc110066,
-    0 0 48px #880800aa;
+    0 0 10px color-mix(in srgb, var(--lc) 53%, transparent),
+    0 0 24px color-mix(in srgb, var(--lc) 40%, transparent),
+    0 0 48px color-mix(in srgb, var(--lc) 67%, black);
 }
 
 .light.on::after {
@@ -105,13 +110,24 @@ h1 {
 }
 
 @keyframes wrongFlash {
-  0%   { background: #180606; border-color: #2a1010; box-shadow: none; }
-  25%  { background: #6a1000; border-color: #ff2000; box-shadow: 0 0 14px #ff2000; }
-  100% { background: #180606; border-color: #2a1010; box-shadow: none; }
+  0%   { background: var(--lc-dark); border-color: var(--lc-dim); box-shadow: none; }
+  25%  { background: var(--lc-flash); border-color: var(--lc); box-shadow: 0 0 14px var(--lc); }
+  100% { background: var(--lc-dark); border-color: var(--lc-dim); box-shadow: none; }
 }
 
 .light.flash {
   animation: wrongFlash 0.55s ease-out forwards;
+}
+
+@keyframes hintPulse {
+  0%   { background: var(--lc-dark); border-color: var(--lc-dim); box-shadow: none; }
+  15%  { background: var(--lc-flash); border-color: var(--lc); box-shadow: 0 0 18px var(--lc); }
+  45%  { background: var(--lc-dark); border-color: color-mix(in srgb, var(--lc) 55%, var(--lc-dim)); box-shadow: 0 0 10px color-mix(in srgb, var(--lc) 40%, transparent); }
+  100% { background: var(--lc-dark); border-color: color-mix(in srgb, var(--lc) 45%, var(--lc-dim)); box-shadow: 0 0 7px color-mix(in srgb, var(--lc) 28%, transparent); }
+}
+
+.light.hint {
+  animation: hintPulse 0.75s ease-out forwards;
 }
 
 /* ── Switches ── */
@@ -180,21 +196,27 @@ h1 {
   pointer-events: none;
 }
 
-/* ── Timer ── */
-.timer-row {
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* ── Start button ── */
+.start-btn {
+  padding: 12px 48px;
+  border-radius: 10px;
+  background: #1a2a1a;
+  border: 2px solid #336633;
+  color: #66cc66;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
 }
 
-.timer {
-  font-size: 1.7rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  font-family: "Courier New", monospace;
-  color: #7799ee;
-  letter-spacing: 0.04em;
+.start-btn:hover {
+  background: #223322;
+  border-color: #55aa55;
+  color: #88ee88;
+  box-shadow: 0 0 18px #33663366;
 }
 
 /* ── Status line ── */

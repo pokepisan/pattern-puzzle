@@ -1,5 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
+const LIGHT_COLORS = [
+  { lc: "#ff3300", lcDark: "#1e0403", lcDim: "#380808", lcFlash: "#6a0a00" },
+  { lc: "#ff8800", lcDark: "#1e0e00", lcDim: "#381800", lcFlash: "#6a2a00" },
+  { lc: "#ffdd00", lcDark: "#1e1b00", lcDim: "#383000", lcFlash: "#6a5500" },
+  { lc: "#33dd55", lcDark: "#021a07", lcDim: "#083015", lcFlash: "#0a5520" },
+  { lc: "#2299ff", lcDark: "#011020", lcDim: "#042040", lcFlash: "#0a3070" },
+  { lc: "#cc44ff", lcDark: "#0e0220", lcDim: "#1e0840", lcFlash: "#3a0a70" },
+];
+
 function shuffle(arr: number[]): number[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -9,7 +18,7 @@ function shuffle(arr: number[]): number[] {
   return a;
 }
 
-type Phase = "countdown" | "playing" | "wrong" | "won";
+type Phase = "idle" | "countdown" | "playing" | "wrong" | "won";
 
 function formatTime(ms: number): string {
   const s = Math.floor(ms / 1000);
@@ -20,11 +29,11 @@ function formatTime(ms: number): string {
 export default function App() {
   const [sequence, setSequence] = useState<number[]>(() => shuffle([0, 1, 2, 3, 4, 5]));
   const [progress, setProgress] = useState(0);
-  const [phase, setPhase] = useState<Phase>("countdown");
+  const [phase, setPhase] = useState<Phase>("idle");
   const [countdown, setCountdown] = useState(3);
-  const [elapsed, setElapsed] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
   const [finalTime, setFinalTime] = useState(0);
+  const [hintLight, setHintLight] = useState<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
   // Countdown ticker: 3 → 2 → 1 → playing
@@ -39,16 +48,9 @@ export default function App() {
     return () => clearTimeout(t);
   }, [phase, countdown]);
 
-  // Live timer — runs during playing and wrong phases
-  useEffect(() => {
-    if (phase !== "playing" && phase !== "wrong") return;
-    const id = setInterval(() => {
-      if (startTimeRef.current !== null) {
-        setElapsed(Date.now() - startTimeRef.current);
-      }
-    }, 100);
-    return () => clearInterval(id);
-  }, [phase]);
+  const startGame = useCallback(() => {
+    setPhase("countdown");
+  }, []);
 
   const pressSwitch = useCallback(
     (idx: number) => {
@@ -65,10 +67,12 @@ export default function App() {
           setProgress(next);
         }
       } else {
+        setHintLight(sequence.indexOf(idx));
         setWrongCount((w) => w + 1);
         setPhase("wrong");
         setTimeout(() => {
           setProgress(0);
+          setHintLight(null);
           setPhase("playing");
         }, 800);
       }
@@ -79,11 +83,11 @@ export default function App() {
   const newGame = useCallback(() => {
     setSequence(shuffle([0, 1, 2, 3, 4, 5]));
     setProgress(0);
-    setPhase("countdown");
+    setPhase("idle");
     setCountdown(3);
-    setElapsed(0);
     setWrongCount(0);
     setFinalTime(0);
+    setHintLight(null);
     startTimeRef.current = null;
   }, []);
 
@@ -92,7 +96,7 @@ export default function App() {
       ? new Set([0, 1, 2, 3, 4, 5])
       : phase === "wrong"
       ? new Set<number>()
-      : new Set(sequence.slice(0, progress));
+      : new Set(Array.from({ length: progress }, (_, i) => i));
 
   return (
     <div className="game">
@@ -102,13 +106,19 @@ export default function App() {
         Press the wrong switch and everything goes dark — start over!
       </p>
 
+      {phase === "idle" && (
+        <button className="start-btn" onClick={startGame}>
+          Start
+        </button>
+      )}
+
       {phase === "countdown" && (
         <div key={countdown} className="countdown-display">
           {countdown}
         </div>
       )}
 
-      <div className={`panel${phase === "countdown" ? " panel-dim" : ""}`}>
+      <div className={`panel${phase === "idle" || phase === "countdown" ? " panel-dim" : ""}`}>
         <div className="lights-row">
           {Array.from({ length: 6 }, (_, i) => (
             <div
@@ -117,9 +127,16 @@ export default function App() {
                 "light",
                 litLights.has(i) ? "on" : "",
                 phase === "wrong" ? "flash" : "",
+                phase === "wrong" && hintLight === i ? "hint" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
+              style={{
+                "--lc": LIGHT_COLORS[i].lc,
+                "--lc-dark": LIGHT_COLORS[i].lcDark,
+                "--lc-dim": LIGHT_COLORS[i].lcDim,
+                "--lc-flash": LIGHT_COLORS[i].lcFlash,
+              } as React.CSSProperties}
             />
           ))}
         </div>
@@ -138,13 +155,10 @@ export default function App() {
         </div>
       </div>
 
-      <div className="timer-row">
-        {(phase === "playing" || phase === "wrong") && (
-          <span className="timer">{formatTime(elapsed)}</span>
-        )}
-      </div>
-
       <div className="status">
+        {phase === "idle" && (
+          <span className="status-idle">Press Start when you're ready.</span>
+        )}
         {phase === "countdown" && (
           <span className="status-idle">Get ready…</span>
         )}
